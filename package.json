@@ -40,6 +40,15 @@
     "typescript"
   ],
   "license": "MIT",
+  "author": "fabiopenha95",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fabiopenha95/nexapdf.git"
+  },
+  "homepage": "https://github.com/fabiopenha95/nexapdf#readme",
+  "bugs": {
+    "url": "https://github.com/fabiopenha95/nexapdf/issues"
+  },
   "dependencies": {},
   "devDependencies": {
     "@types/node": "^22.20.5",
