@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: Testes (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ['22.x', '24.x']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  pacote:
+    name: Pacote publicado (${{ matrix.os }}, Node ${{ matrix.node }})
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ['20.x', '22.x', '24.x']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+      - run: npm ci
+      - run: npm run build
+      - run: npm pack
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Instala o .tgz num projeto limpo e gera um PDF
+        shell: bash
+        run: |
+          mkdir consumidor && cd consumidor
+          npm init -y > /dev/null
+          npm pkg set type=module
+          npm install ../nexapdf-*.tgz
+          cat > app.js <<'JS'
+          import { NexaPDF } from 'nexapdf';
+          const r = await new NexaPDF().convert({ html: '<h1>Olá</h1><p>CI</p>', output: 'saida.pdf' });
+          if (r.pageCount !== 1 || !r.buffer.subarray(0, 8).toString().startsWith('%PDF-1.7')) process.exit(1);
+          console.log('PDF gerado:', r.buffer.length, 'bytes');
+          JS
+          node app.js
